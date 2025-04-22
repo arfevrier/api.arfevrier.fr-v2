@@ -1,0 +1,5 @@
+.env
+backup_*/
+__pycache__/
+data/
+index.html

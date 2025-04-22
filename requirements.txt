@@ -1,0 +1,5 @@
+flask
+flask-selfdoc
+Flask-Limiter
+Flask-Cors
+requests
