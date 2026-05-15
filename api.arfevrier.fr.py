@@ -269,6 +269,25 @@ def twitch(username):
     else:
         return jsonify({'error':'Incorrect username'}), 400
 
+@app.route('/twitch/video/<string:id>')
+@app.route('/twitch/video/<string:id>/<string:quality>')
+@auto.doc()
+def twitch_video(id, quality="chunked"):
+    """Returns the m3u8 (mpeg url) file of a Twitch vod. Quality: chunked (default), 720p60, 480p30, 360p30, audio_only, etc..."""
+    if re.fullmatch("^[0-9]+", id) is not None and re.fullmatch("^[a-zA-Z0-9_]+", quality) is not None:
+        try:
+            url = subprocess.check_output(["bash", "-c", f"twitch-dl info {id} --json 2>/dev/null| jq -r '.playlists[] | select(.group_id == \"{quality}\") | .url'"], text=True)
+            # Skip last '\n' char
+            r = url[:-1]
+            if "url" in request.args:
+                return jsonify(r)
+            else:
+                return f'<video controls="" autoplay="" width="100%" height="100%" name="media"><source src="{r}" type="application/vnd.apple.mpegurl"></video>', 200
+        except:
+            return jsonify({'error':'Error with Streamlink'}), 400
+    else:
+        return jsonify({'error':'Incorrect username'}), 400
+
 @app.route('/nmap/<string:ipv4>')
 @auto.doc()
 def nmap(ipv4):
