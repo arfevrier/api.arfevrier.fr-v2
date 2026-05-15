@@ -79,13 +79,13 @@ def backup_status():
     """Returns backup status of the server."""
     try:
         # For daily backup
-        daily_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "BackupStorageS3:/backup-arfevrier/daily"]))
+        daily_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "RbxOVH:/afr-backup-daily"]))
         #> At least one backup present
         if len(daily_backup_files) == 0:
             return jsonify({'error':'Daily backup empty'}), 400
         for backup_files in daily_backup_files:
-            #> Backup size is more than 50Mo
-            if backup_files['Size'] < 50000000:
+            #> Backup size is more than 500Mo
+            if backup_files['Size'] < 100000000:
                 return jsonify({'error':'Daily backup too small'}), 400
             #> Backup size is less than 10Go
             if backup_files['Size'] > 10000000000:
@@ -95,17 +95,17 @@ def backup_status():
                 return jsonify({'error':'Daily backup not deleted'}), 400
 
         # For monthly backup
-        monthly_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "BackupStorageS3:/backup-arfevrier/monthly"]))
+        monthly_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "GraOVH:/afr-backup-monthly"]))
         #> At least one backup present
         if len(monthly_backup_files) == 0:
             return jsonify({'error':'Montly backup empty'}), 400
         for backup_files in monthly_backup_files:
-            #> Backup size is more than 50Mo
-            if backup_files['Size'] < 50000000:
+            #> Backup size is more than 10Go
+            if backup_files['Size'] < 10000000000:
                 return jsonify({'error':'Montly backup too small'}), 400
-            #> Backup size is less than 10Go
-            if backup_files['Size'] > 10000000000:
-                return jsonify({'error':'Daily backup too big'}), 400
+            #> Backup size is less than 60Go
+            if backup_files['Size'] > 60000000000:
+                return jsonify({'error':'Monthly backup too big'}), 400
             #> Backup is not older than 31 days
             if datetime.datetime.now()-datetime.datetime.strptime(backup_files['Name'], "backup-%Y-%m-%d-%H:%M:%S.tar.gz") > datetime.timedelta(days=31):
                 return jsonify({'error':'Montly backup not deleted'}), 400
