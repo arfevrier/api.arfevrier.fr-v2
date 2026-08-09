@@ -255,17 +255,21 @@ def twitter_video(id):
         return jsonify({'error':'Incorrect id'}), 400
     
 @app.route('/twitch/<string:username>')
+@app.route('/twitch/<string:username>/<string:quality>')
 @auto.doc()
-def twitch(username):
-    """Returns the m3u8 (mpeg url) file of a Twitch livestream."""
-    if re.fullmatch("^[a-zA-Z0-9_]+", username) is not None:
+def twitch(username, quality="best"):
+    """Returns the m3u8 (mpeg url) file of a Twitch livestream. Quality: best (default), 720p60, 480p30, 360p30, audio_only, etc..."""
+    if re.fullmatch("^[a-zA-Z0-9_]+", username) is not None and re.fullmatch("^[a-zA-Z0-9_]+", quality) is not None:
         try:
-            url = subprocess.check_output(["streamlink", "--stream-url", f"twitch.tv/{username}"], text=True)
+            url = subprocess.check_output(["yt-dlp", "-g", "-f", quality, f"twitch.tv/{username}"], text=True)
             # Skip last '\n' char
-            r = requests.get(url[:-1], allow_redirects=True)
-            return r.content, 200, {'Content-Type': 'application/vnd.apple.mpegurl'}
+            r = url[:-1]
+            if "url" in request.args:
+                return jsonify(r)
+            else:
+                return redirect(r)
         except:
-            return jsonify({'error':'Error with Streamlink'}), 400
+            return jsonify({'error':'Error with Yt-dlp'}), 400
     else:
         return jsonify({'error':'Incorrect username'}), 400
 
@@ -282,7 +286,7 @@ def twitch_video(id, quality="chunked"):
             if "url" in request.args:
                 return jsonify(r)
             else:
-                return f'<video controls="" autoplay="" width="100%" height="100%" name="media"><source src="{r}" type="application/vnd.apple.mpegurl"></video>', 200
+                return redirect(r)
         except:
             return jsonify({'error':'Error with Streamlink'}), 400
     else:
