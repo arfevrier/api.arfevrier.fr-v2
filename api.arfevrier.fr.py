@@ -79,12 +79,12 @@ def backup_status():
     """Returns backup status of the server."""
     try:
         # For daily backup
-        daily_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "RbxOVH:/afr-backup-daily"]))
+        daily_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "OvhGRA:/afr-backup-daily"]))
         #> At least one backup present
         if len(daily_backup_files) == 0:
             return jsonify({'error':'Daily backup empty'}), 400
         for backup_files in daily_backup_files:
-            #> Backup size is more than 500Mo
+            #> Backup size is more than 100Mo
             if backup_files['Size'] < 100000000:
                 return jsonify({'error':'Daily backup too small'}), 400
             #> Backup size is less than 10Go
@@ -95,7 +95,7 @@ def backup_status():
                 return jsonify({'error':'Daily backup not deleted'}), 400
 
         # For monthly backup
-        monthly_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "GraOVH:/afr-backup-monthly"]))
+        monthly_backup_files = json.loads(subprocess.check_output(["rclone", "lsjson", "--no-mimetype", "--no-modtime", "OvhDE:/afr-backup-monthly"]))
         #> At least one backup present
         if len(monthly_backup_files) == 0:
             return jsonify({'error':'Montly backup empty'}), 400
