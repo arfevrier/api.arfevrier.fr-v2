@@ -182,7 +182,7 @@ def youtube_video(id):
             if videoIDCache.inCache(id):
                 r = videoIDCache.get(id)
             else:
-                url = subprocess.check_output(["yt-dlp", "-g", "-f", "b", f"https://youtube.com/watch?v={id}"], text=True)
+                url = subprocess.check_output(["yt-dlp", "-g", "-f", "bv", f"https://youtube.com/watch?v={id}"], text=True)
                 # Skip last '\n' char
                 r = url[:-1]
                 videoIDCache.add(id, r)
@@ -214,7 +214,7 @@ def youtube_audio(id):
             if audioIDCache.inCache(id):
                 r = audioIDCache.get(id)
             else:
-                url = subprocess.check_output(["yt-dlp", "-g", "-x", f"https://youtube.com/watch?v={id}"], text=True)
+                url = subprocess.check_output(["yt-dlp", "-g", "-f", "ba", f"https://youtube.com/watch?v={id}"], text=True)
                 # Skip last '\n' char
                 r = url[:-1]
                 audioIDCache.add(id, r)
