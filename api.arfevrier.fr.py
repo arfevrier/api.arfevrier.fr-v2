@@ -257,19 +257,22 @@ def twitter_video(id):
 @app.route('/twitch/<string:username>')
 @app.route('/twitch/<string:username>/<string:quality>')
 @auto.doc()
-def twitch(username, quality="best"):
-    """Returns the m3u8 (mpeg url) file of a Twitch livestream. Quality: best (default), 720p60, 480p30, 360p30, audio_only, etc..."""
+def twitch(username, quality="chunked"):
+    """Returns the m3u8 (mpeg url) file of a Twitch livestream or last video. Quality: chunked (default), 720p60, 480p30, 360p30, audio_only, etc..."""
     if re.fullmatch("^[a-zA-Z0-9_]+", username) is not None and re.fullmatch("^[a-zA-Z0-9_]+", quality) is not None:
         try:
-            url = subprocess.check_output(["yt-dlp", "-g", "-f", quality, f"twitch.tv/{username}"], text=True)
-            # Skip last '\n' char
-            r = url[:-1]
-            if "url" in request.args:
+            videos = json.loads(subprocess.check_output(["twitch-dl", "videos", username, "--json"], text=True, stderr=subprocess.DEVNULL))
+            live_id = next(v["id"] for v in videos["videos"])
+            info = json.loads(subprocess.check_output(["twitch-dl", "info", live_id, "--json"], text=True, stderr=subprocess.DEVNULL))
+            r = next(p["url"] for p in info["playlists"] if p["group_id"] == quality)
+            if "raw" in request.args:
+                return jsonify(info)
+            elif "url" in request.args:
                 return jsonify(r)
             else:
-                return redirect(r)
+                return f'<video controls="" autoplay="" width="100%" height="100%" name="media"><source src="{r}" type="application/vnd.apple.mpegurl"></video>', 200
         except:
-            return jsonify({'error':'Error with Yt-dlp'}), 400
+            return jsonify({'error':'Error with Twitch-dl'}), 400
     else:
         return jsonify({'error':'Incorrect username'}), 400
 
@@ -280,13 +283,14 @@ def twitch_video(id, quality="chunked"):
     """Returns the m3u8 (mpeg url) file of a Twitch vod. Quality: chunked (default), 720p60, 480p30, 360p30, audio_only, etc..."""
     if re.fullmatch("^[0-9]+", id) is not None and re.fullmatch("^[a-zA-Z0-9_]+", quality) is not None:
         try:
-            url = subprocess.check_output(["bash", "-c", f"twitch-dl info {id} --json 2>/dev/null| jq -e -r '.playlists[] | select(.group_id == \"{quality}\") | .url'"], text=True)
-            # Skip last '\n' char
-            r = url[:-1]
-            if "url" in request.args:
+            info = json.loads(subprocess.check_output(["twitch-dl", "info", id, "--json"], text=True, stderr=subprocess.DEVNULL))
+            r = next(p["url"] for p in info["playlists"] if p["group_id"] == quality)
+            if "raw" in request.args:
+                return jsonify(info)
+            elif "url" in request.args:
                 return jsonify(r)
             else:
-                return redirect(r)
+                return f'<video controls="" autoplay="" width="100%" height="100%" name="media"><source src="{r}" type="application/vnd.apple.mpegurl"></video>', 200
         except:
             return jsonify({'error':'Error with Twitch-dl'}), 400
     else:
